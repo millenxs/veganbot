@@ -1,0 +1,119 @@
+<!DOCTYPE html> 
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="shortcut icon" href="imgs/favicon.png" type="image/x-icon">
+    <title>Veganbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: #e8e8e8;
+            background-size: cover;
+            font-family: 'Open Sans', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        @keyframes chatAnimation {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chat-body .message {
+            animation: chatAnimation 0.3s ease-in-out;
+            animation-fill-mode: both;
+        }
+
+        .chat-body .message:nth-child(even) {
+            animation-delay: 0.1s;
+        }
+
+        .chat-body .message:nth-child(odd) {
+            animation-delay: 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <div class="flex items-center justify-center h-full">
+        <div class="bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md h-[700px] flex flex-col overflow-hidden">
+            <div class="bg-gray-700 p-4 flex justify-between items-center">
+                <div class="text-white text-lg">Chatbot de Veganismo</div>
+                <h2 class="text-gray-400 text-sm">@VeganBot</h2>
+                <figure class="avatar">
+                    <img src="./imgs/BOT.png" width="50" height="50" class="rounded-full" />
+                </figure>
+            </div>
+            <div class="chat-body flex-1 p-4 overflow-y-auto flex flex-col space-y-2" id="chat">
+                <!-- Mensagens serão exibidas aqui -->
+            </div>
+            <div class="bg-gray-700 p-2 flex">
+				<textarea placeholder="Digite sua mensagem..." id="pergunta" class="flex-grow p-2 bg-gray-600 text-white rounded-md outline-none resize-none mb-4" rows="3"></textarea>
+                <button type="submit" id="enviar" class="ml-2 bg-[#7BCBD5] hover:bg-green-600 text-dark font-bold py-2 px-4 rounded-md mb-4">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função que envia a mensagem
+        async function enviarMensagem() {
+            const pergunta = document.getElementById('pergunta').value;
+            if (pergunta.trim() === '') return;
+
+            // Exibe a mensagem do usuário
+            document.getElementById('chat').innerHTML += `<div class="message outgoing bg-[#7BCBD5] self-end text-dark max-w-xs rounded-lg px-3 py-1.5 text-sm break-words">${pergunta}</div>`;
+            document.getElementById('pergunta').value = '';
+
+            // Faz a requisição para obter a resposta do bot
+            const response = await fetch('http://127.0.0.1:5000/faq', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pergunta })
+            });
+
+            const data = await response.json();
+
+            // Formata e estiliza a resposta do bot, removendo "*" e "##"
+            let respostaFormatada = data.resposta
+                .replace(/\*/g, '') // Remove asteriscos
+                .replace(/##/g, '') // Remove hashtags
+                .replace(/\n/g, '<br>');
+
+            // Exibe a mensagem do bot
+            document.getElementById('chat').innerHTML += `<div class="message incoming bg-gray-900 self-start text-white max-w-xs rounded-lg px-3 py-1.5 text-smbreak-words">${respostaFormatada}</div>`;
+            document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+        }
+
+        // Função para exibir mensagem de boas-vindas
+        async function carregarBoasVindas() {
+            const response = await fetch('http://127.0.0.1:5000/');
+            const data = await response.json();
+            
+            // Exibe a mensagem de boas-vindas do bot
+            document.getElementById('chat').innerHTML += `<div class="message incoming bg-gray-900 p-2 rounded-lg mb-2 max-w-full break-words">${data.message}</div>`;
+            document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+        }
+
+        // Evento de clique no botão "Enviar"
+        document.getElementById('enviar').onclick = enviarMensagem;
+
+        // Evento para enviar mensagem ao pressionar a tecla "Enter"
+        document.getElementById('pergunta').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Evita o comportamento padrão do Enter
+                enviarMensagem(); // Chama a função de enviar mensagem
+            }
+        });
+
+        // Carregar a mensagem de boas-vindas quando a página for carregada
+        window.onload = carregarBoasVindas;
+    </script>
+</body>
+</html>
