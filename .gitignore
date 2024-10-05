@@ -1,1 +1,4 @@
 gemini.env
+venv/
+vercel.json
+requirements.txt
